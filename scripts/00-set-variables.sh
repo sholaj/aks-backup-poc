@@ -17,7 +17,7 @@ export SNAPSHOT_RG="rg-${PREFIX}-snapshots"
 export BACKUP_POLICY_NAME="policy-daily"
 
 # AKS configuration
-export KUBERNETES_VERSION="1.29"
+export KUBERNETES_VERSION="1.33"
 export NODE_SIZE="Standard_B2ms"
 export NODE_COUNT=1
 

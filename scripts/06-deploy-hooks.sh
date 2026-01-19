@@ -16,7 +16,7 @@ MAX_RETRIES=30
 RETRY_COUNT=0
 
 while [[ $RETRY_COUNT -lt $MAX_RETRIES ]]; do
-    if kubectl get crd backuphooks.dataprotection.microsoft.com &>/dev/null; then
+    if kubectl get crd backuphooks.clusterbackup.dataprotection.microsoft.com &>/dev/null; then
         log_info "BackupHook CRD is available"
         break
     fi
@@ -34,7 +34,7 @@ if [[ $RETRY_COUNT -ge $MAX_RETRIES ]]; then
 fi
 
 # Check for RestoreHook CRD
-if kubectl get crd restorehooks.dataprotection.microsoft.com &>/dev/null; then
+if kubectl get crd restorehooks.clusterbackup.dataprotection.microsoft.com &>/dev/null; then
     log_info "RestoreHook CRD is available"
 else
     log_warn "RestoreHook CRD not found"

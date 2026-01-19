@@ -1,29 +1,28 @@
-apiVersion: dataprotection.microsoft.com/v1alpha1
+apiVersion: clusterbackup.dataprotection.microsoft.com/v1alpha1
 kind: BackupHook
 metadata:
   name: mysql-backup-hook
   namespace: at-app2
 spec:
-  applicationPodSelector:
-    matchLabels:
-      app.kubernetes.io/name: mysql
-  preHooks:
-    - name: mysql-flush-lock
-      exec:
-        command:
-          - /bin/sh
-          - -c
-          - mysql -u root -p$MYSQL_ROOT_PASSWORD -e "FLUSH TABLES WITH READ LOCK; SELECT SLEEP(30);"
-        container: mysql
-        timeout: 60s
-        onError: Continue
-  postHooks:
-    - name: mysql-unlock
-      exec:
-        command:
-          - /bin/sh
-          - -c
-          - mysql -u root -p$MYSQL_ROOT_PASSWORD -e "UNLOCK TABLES;"
-        container: mysql
-        timeout: 30s
-        onError: Continue
+  backupHook:
+    - name: mysql-hooks
+      includedNamespaces:
+        - at-app2
+      preHooks:
+        - exec:
+            command:
+              - /bin/sh
+              - -c
+              - mysql -u root -p$MYSQL_ROOT_PASSWORD -e "FLUSH TABLES WITH READ LOCK; SELECT SLEEP(30);"
+            container: mysql
+            timeout: 60s
+            onError: Continue
+      postHooks:
+        - exec:
+            command:
+              - /bin/sh
+              - -c
+              - mysql -u root -p$MYSQL_ROOT_PASSWORD -e "UNLOCK TABLES;"
+            container: mysql
+            timeout: 30s
+            onError: Continue

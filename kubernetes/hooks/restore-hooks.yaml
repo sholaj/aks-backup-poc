@@ -1,30 +1,30 @@
-apiVersion: dataprotection.microsoft.com/v1alpha1
+apiVersion: clusterbackup.dataprotection.microsoft.com/v1alpha1
 kind: RestoreHook
 metadata:
   name: mysql-restore-hook
   namespace: at-app2
 spec:
-  applicationPodSelector:
-    matchLabels:
-      app.kubernetes.io/name: mysql
-  postHooks:
+  restoreHook:
     - name: mysql-health-check
-      exec:
-        command:
-          - /bin/sh
-          - -c
-          - |
-            for i in $(seq 1 30); do
-              if mysqladmin ping -h localhost -u root -p$MYSQL_ROOT_PASSWORD 2>/dev/null; then
-                echo "MySQL is ready"
-                exit 0
-              fi
-              echo "Waiting for MySQL... attempt $i"
-              sleep 10
-            done
-            echo "MySQL failed to become ready"
-            exit 1
-        container: mysql
-        timeout: 300s
-        onError: Continue
-      waitTimeout: 5m
+      includedNamespaces:
+        - at-app2
+      postHooks:
+        - exec:
+            command:
+              - /bin/sh
+              - -c
+              - |
+                for i in $(seq 1 30); do
+                  if mysqladmin ping -h localhost -u root -p$MYSQL_ROOT_PASSWORD 2>/dev/null; then
+                    echo "MySQL is ready"
+                    exit 0
+                  fi
+                  echo "Waiting for MySQL... attempt $i"
+                  sleep 10
+                done
+                echo "MySQL failed to become ready"
+                exit 1
+            container: mysql
+            execTimeout: 300s
+            waitTimeout: 5m
+            onError: Continue

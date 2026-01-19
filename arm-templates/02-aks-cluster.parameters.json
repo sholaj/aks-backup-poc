@@ -9,7 +9,7 @@
       "value": "uksouth"
     },
     "kubernetesVersion": {
-      "value": "1.29"
+      "value": "1.33"
     },
     "nodeVmSize": {
       "value": "Standard_B2ms"
