@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: at-app1
+  labels:
+    app.kubernetes.io/part-of: aks-backup-poc
+    backup: "true"
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: at-app2
+  labels:
+    app.kubernetes.io/part-of: aks-backup-poc
+    backup: "true"

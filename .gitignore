@@ -1,0 +1,30 @@
+# Environment files
+.env
+*.env.local
+
+# Azure CLI outputs
+azuredeployment.log
+
+# Terraform (if used later)
+*.tfstate
+*.tfstate.*
+.terraform/
+.terraform.lock.hcl
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Logs
+*.log
+
+# Kubeconfig (if stored locally)
+kubeconfig
+*.kubeconfig

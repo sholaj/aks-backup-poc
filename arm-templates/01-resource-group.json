@@ -1,0 +1,48 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2018-05-01/subscriptionDeploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "resourceGroupName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the resource group to create"
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "uksouth",
+      "metadata": {
+        "description": "Location for the resource group"
+      }
+    },
+    "tags": {
+      "type": "object",
+      "defaultValue": {
+        "project": "aks-backup-poc",
+        "environment": "poc"
+      },
+      "metadata": {
+        "description": "Tags to apply to the resource group"
+      }
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Resources/resourceGroups",
+      "apiVersion": "2021-04-01",
+      "name": "[parameters('resourceGroupName')]",
+      "location": "[parameters('location')]",
+      "tags": "[parameters('tags')]"
+    }
+  ],
+  "outputs": {
+    "resourceGroupId": {
+      "type": "string",
+      "value": "[subscriptionResourceId('Microsoft.Resources/resourceGroups', parameters('resourceGroupName'))]"
+    },
+    "resourceGroupName": {
+      "type": "string",
+      "value": "[parameters('resourceGroupName')]"
+    }
+  }
+}

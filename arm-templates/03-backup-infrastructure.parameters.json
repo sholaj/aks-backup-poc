@@ -1,0 +1,25 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "backupVaultName": {
+      "value": "bvault-aksbkppoc"
+    },
+    "storageAccountName": {
+      "value": "staksbkppocbackup"
+    },
+    "backupPolicyName": {
+      "value": "policy-daily"
+    },
+    "location": {
+      "value": "uksouth"
+    },
+    "tags": {
+      "value": {
+        "project": "aks-backup-poc",
+        "environment": "poc",
+        "owner": "demo"
+      }
+    }
+  }
+}

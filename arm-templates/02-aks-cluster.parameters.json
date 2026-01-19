@@ -1,0 +1,28 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "clusterName": {
+      "value": "aks-aksbkppoc"
+    },
+    "location": {
+      "value": "uksouth"
+    },
+    "kubernetesVersion": {
+      "value": "1.29"
+    },
+    "nodeVmSize": {
+      "value": "Standard_B2ms"
+    },
+    "nodeCount": {
+      "value": 1
+    },
+    "tags": {
+      "value": {
+        "project": "aks-backup-poc",
+        "environment": "poc",
+        "owner": "demo"
+      }
+    }
+  }
+}
