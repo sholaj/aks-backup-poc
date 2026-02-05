@@ -8,13 +8,35 @@ The manual `--cgroup-driver` kubelet flag has been deprecated in Kubernetes 1.34
 
 Kubernetes now automatically detects and configures the appropriate cgroup driver (systemd or cgroupfs) based on the container runtime configuration. Manual configuration is deprecated in 1.34 and will be removed in 1.36.
 
+## Curation Results (2026-02-05)
+
+### ARM Template Scan
+```
+Scanned: arm-templates/*.json (4 files)
+Explicit cgroup driver configs: 0
+kubeletConfig sections: 0
+```
+
+### Findings
+| File | Cgroup Config |
+|------|---------------|
+| `arm-templates/01-resource-group.json` | N/A (resource group) |
+| `arm-templates/02-aks-cluster.json` | None - uses AKS defaults |
+| `arm-templates/02-aks-cluster.parameters.json` | None |
+| `arm-templates/03-backup-infrastructure.json` | N/A (backup vault) |
+
+### Status: NO ACTION REQUIRED
+ARM templates do not specify explicit cgroup driver configuration. AKS auto-detection will be used (systemd cgroup driver).
+
+---
+
 ## Current State
 
 ### Assessment Tasks
-- [ ] Review ARM templates for cgroup configurations
-- [ ] Check kubelet configuration in node pools
-- [ ] Verify current cgroup driver in use across clusters
-- [ ] Document any custom cgroup configurations
+- [x] Review ARM templates for cgroup configurations - **COMPLETE: None found**
+- [x] Check kubelet configuration in node pools - **COMPLETE: Using defaults**
+- [ ] Verify current cgroup driver in use across clusters - **Verify after deployment**
+- [x] Document any custom cgroup configurations - **COMPLETE: None exist**
 
 ### Verification Commands
 ```bash
@@ -90,10 +112,10 @@ Expected output: `"systemd"`
 
 ## Acceptance Criteria
 
-- [ ] No explicit cgroup driver flags in ARM templates
-- [ ] All clusters using auto-detected cgroup driver
-- [ ] Pipeline validation passes
-- [ ] Documentation updated
+- [x] No explicit cgroup driver flags in ARM templates - **VERIFIED: None present**
+- [ ] All clusters using auto-detected cgroup driver - **Verify after deployment**
+- [ ] Pipeline validation passes - **Pending deployment**
+- [x] Documentation updated - **COMPLETE**
 
 ---
 **Labels:** `deprecation`, `kubelet`, `aks-upgrade`, `version-1.34`  

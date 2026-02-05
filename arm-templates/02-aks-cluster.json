@@ -17,7 +17,7 @@
     },
     "kubernetesVersion": {
       "type": "string",
-      "defaultValue": "1.29",
+      "defaultValue": "1.34",
       "metadata": {
         "description": "Kubernetes version"
       }
@@ -57,7 +57,7 @@
   "resources": [
     {
       "type": "Microsoft.ContainerService/managedClusters",
-      "apiVersion": "2024-01-01",
+      "apiVersion": "2025-01-01",
       "name": "[parameters('clusterName')]",
       "location": "[parameters('location')]",
       "tags": "[parameters('tags')]",
@@ -127,11 +127,11 @@
     },
     "clusterPrincipalId": {
       "type": "string",
-      "value": "[reference(resourceId('Microsoft.ContainerService/managedClusters', parameters('clusterName')), '2024-01-01', 'Full').identity.principalId]"
+      "value": "[reference(resourceId('Microsoft.ContainerService/managedClusters', parameters('clusterName')), '2025-01-01', 'Full').identity.principalId]"
     },
     "oidcIssuerUrl": {
       "type": "string",
-      "value": "[reference(resourceId('Microsoft.ContainerService/managedClusters', parameters('clusterName')), '2024-01-01').oidcIssuerProfile.issuerURL]"
+      "value": "[reference(resourceId('Microsoft.ContainerService/managedClusters', parameters('clusterName')), '2025-01-01').oidcIssuerProfile.issuerURL]"
     }
   }
 }
