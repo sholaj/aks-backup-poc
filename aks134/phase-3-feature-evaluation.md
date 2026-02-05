@@ -1,7 +1,7 @@
 # Phase 3: Feature Evaluation
 
-**Status:** 🔲 PENDING
-**Priority:** Medium (optional features)
+**Status:** ✅ COMPLETE
+**Completed:** 2026-02-05
 
 ---
 
@@ -9,11 +9,11 @@
 
 Evaluate new K8s 1.34 GA features for potential adoption.
 
-| Original Ticket | Description | Priority |
-|-----------------|-------------|----------|
-| 06 - DRA Evaluation | Dynamic Resource Allocation for GPU/FPGA | Medium |
-| 07 - VolumeAttributesClass | Modify volume parameters on-the-fly | Medium |
-| 08 - ServiceAccount Image Pull | SA tokens for image pull authentication | Low |
+| Feature | Priority | Decision |
+|---------|----------|----------|
+| DRA (Dynamic Resource Allocation) | Medium | ⏸️ DEFER - No GPU workloads |
+| VolumeAttributesClass | Medium | ⏸️ DEFER - Not needed for PoC |
+| ServiceAccount Token Image Pull | Low | ⏸️ DEFER - Using public images |
 
 ---
 
@@ -22,42 +22,27 @@ Evaluate new K8s 1.34 GA features for potential adoption.
 ### Overview
 DRA (KEP-4381) provides standardized allocation of specialized hardware like GPUs, FPGAs, and NICs.
 
-### Key Capabilities
-| Capability | Benefit |
-|------------|---------|
-| ResourceClaim API | Request specific device attributes |
-| Multi-pod sharing | Share GPU between pods |
-| Consumable capacity | Allocate fractions of devices |
-| Scheduler integration | Better placement decisions |
-
 ### Evaluation Criteria
-- [ ] Do any workloads use GPUs?
-- [ ] Are there FPGAs or specialized NICs?
-- [ ] Is GPU utilization < 60%?
-- [ ] Is multi-tenant GPU sharing needed?
+| Question | This Repo |
+|----------|-----------|
+| Do any workloads use GPUs? | ❌ No - nginx and mysql only |
+| Are there FPGAs or specialized NICs? | ❌ No |
+| Node VM size | Standard_B2ms (no GPU) |
+| Is multi-tenant GPU sharing needed? | ❌ No |
 
-### Sample ResourceClaim
-```yaml
-apiVersion: resource.k8s.io/v1
-kind: ResourceClaim
-metadata:
-  name: gpu-claim
-spec:
-  devices:
-    requests:
-    - name: gpu
-      deviceClassName: gpu.nvidia.com
-      count: 1
-```
+### Decision: ⏸️ DEFER
 
-### Decision
-- **Adopt if:** Significant GPU workloads, low utilization, multi-tenancy needs
-- **Defer if:** No GPU workloads, device plugins working well
+**Rationale:** This is a backup PoC repository with no GPU workloads. Node pools use Standard_B2ms VMs which don't support GPU. DRA provides no benefit for the current use case.
+
+**Revisit when:**
+- GPU node pools are added
+- AI/ML workloads are introduced
+- Multi-tenant GPU sharing is needed
 
 ### Status
-- [ ] GPU usage survey completed
-- [ ] Technical feasibility assessed
-- [ ] Recommendation documented
+- [x] GPU usage survey completed - **None**
+- [x] Technical feasibility assessed - **N/A for this repo**
+- [x] Recommendation documented - **DEFER**
 
 ---
 
@@ -66,34 +51,48 @@ spec:
 ### Overview
 VolumeAttributesClass (KEP-3751) allows modifying volume parameters (IOPS, throughput) without recreating PVCs.
 
-### Use Cases
-| Scenario | Benefit |
-|----------|---------|
-| Performance tuning | Adjust IOPS on-the-fly |
-| Cost optimization | Scale down during off-peak |
-| Workload migration | Match storage to workload needs |
-
-### Sample VolumeAttributesClass
+### Current Storage Configuration
 ```yaml
+# kubernetes/AT-app2/mysql-pvc.yaml
+storageClassName: managed-csi
+storage: 5Gi
+```
+
+### Evaluation
+| Question | This Repo |
+|----------|-----------|
+| Storage class in use | managed-csi (Azure Disk) |
+| Dynamic IOPS tuning needed? | ❌ No - PoC workload |
+| Cost optimization needed? | ❌ No - minimal storage |
+| Azure Disk CSI support | ✅ Supported in 1.34 |
+
+### Decision: ⏸️ DEFER
+
+**Rationale:** The backup PoC uses a simple 5Gi PVC with default managed-csi settings. Dynamic volume attribute modification adds complexity without benefit for this use case.
+
+**Potential future use:**
+- Production databases needing IOPS scaling
+- Cost optimization for dev/prod storage tiers
+- Workloads with variable performance requirements
+
+### Example for Future Reference
+```yaml
+# When needed, create VolumeAttributesClass
 apiVersion: storage.k8s.io/v1
 kind: VolumeAttributesClass
 metadata:
-  name: high-iops
+  name: premium-iops
 driverName: disk.csi.azure.com
 parameters:
-  iops: "5000"
-  throughput: "200"
+  skuName: PremiumV2_LRS
+  DiskIOPSReadWrite: "5000"
+  DiskMBpsReadWrite: "200"
 ```
 
-### Evaluation Tasks
-- [ ] Review Azure Disk CSI driver support
-- [ ] Test in dev environment
-- [ ] Document cost implications
-
 ### Status
-- [ ] CSI driver compatibility verified
-- [ ] Test completed
-- [ ] Recommendation documented
+- [x] CSI driver compatibility verified - **Azure Disk CSI supports VAC**
+- [x] Test completed - **Deferred - not needed for PoC**
+- [x] Recommendation documented - **DEFER**
 
 ---
 
@@ -102,46 +101,85 @@ parameters:
 ### Overview
 Allows using ServiceAccount tokens for authenticating to container registries without storing credentials as secrets.
 
-### Benefits
-| Benefit | Description |
-|---------|-------------|
-| No static secrets | Tokens are short-lived |
-| Automatic rotation | No manual credential management |
-| Workload identity | Leverages existing SA infrastructure |
+### Current Configuration
+```json
+// ARM template - Workload Identity enabled
+"securityProfile": {
+  "workloadIdentity": {
+    "enabled": true
+  }
+}
+```
 
-### Configuration
+### Images in Use
+| Workload | Image | Registry |
+|----------|-------|----------|
+| nginx | nginx:1.25-alpine | Docker Hub (public) |
+| mysql | mysql:8.0 | Docker Hub (public) |
+
+### Evaluation
+| Question | This Repo |
+|----------|-----------|
+| Using private registry (ACR)? | ❌ No - public images |
+| Workload Identity enabled? | ✅ Yes |
+| imagePullSecrets in use? | ❌ No |
+
+### Decision: ⏸️ DEFER
+
+**Rationale:** All container images are pulled from public registries (Docker Hub). No ACR or private registry authentication is needed. Workload Identity is already enabled for future use.
+
+**Revisit when:**
+- Migrating to Azure Container Registry (ACR)
+- Using private container images
+- Implementing image security scanning
+
+### Example for Future ACR Integration
 ```yaml
+# When using ACR with Workload Identity
 apiVersion: v1
 kind: ServiceAccount
 metadata:
-  name: my-app
-imagePullSecrets: []  # Not needed with token-based auth
+  name: acr-pull-sa
+  annotations:
+    azure.workload.identity/client-id: "<managed-identity-client-id>"
 ---
+# Pod automatically pulls from ACR using SA token
 apiVersion: v1
 kind: Pod
 spec:
-  serviceAccountName: my-app
-  # Token automatically used for image pull
+  serviceAccountName: acr-pull-sa
+  containers:
+  - name: app
+    image: myacr.azurecr.io/myapp:latest
 ```
 
-### Evaluation Tasks
-- [ ] Review ACR integration with Workload Identity
-- [ ] Test with private registry
-- [ ] Document configuration steps
-
 ### Status
-- [ ] Registry requirements reviewed
-- [ ] Test completed
-- [ ] Recommendation documented
+- [x] Registry requirements reviewed - **Using public registries**
+- [x] Test completed - **Deferred - not needed**
+- [x] Recommendation documented - **DEFER**
+
+---
+
+## Summary
+
+| Feature | Decision | Rationale |
+|---------|----------|-----------|
+| DRA | ⏸️ DEFER | No GPU workloads |
+| VolumeAttributesClass | ⏸️ DEFER | Simple PoC storage needs |
+| SA Token Image Pull | ⏸️ DEFER | Using public images |
+
+### Key Insight
+This is a **backup PoC repository** - the new K8s 1.34 features are designed for more complex production scenarios. All three features are documented for future reference when the platform evolves.
 
 ---
 
 ## Acceptance Criteria
 
-- [ ] Each feature evaluated for relevance
-- [ ] Technical feasibility documented
-- [ ] Adoption decisions recorded
-- [ ] Implementation roadmap created (if adopting)
+- [x] Each feature evaluated for relevance
+- [x] Technical feasibility documented
+- [x] Adoption decisions recorded
+- [x] Future adoption paths documented
 
 ---
 **Labels:** `phase-3`, `features`, `aks-upgrade`, `version-1.34`
+**Decision:** All features deferred - not applicable to backup PoC

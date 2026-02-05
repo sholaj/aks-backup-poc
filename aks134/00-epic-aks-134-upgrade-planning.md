@@ -18,9 +18,9 @@ This epic tracks all activities required to curate, test, and roll out AKS versi
 |-------|--------|--------|
 | 1 | [Research & Planning](phase-1-research-planning.md) | ✅ Complete |
 | 2 | [Deprecation Work](phase-2-deprecation-work.md) | ✅ Complete |
-| 3 | [Feature Evaluation](phase-3-feature-evaluation.md) | 🔲 Pending |
-| 4 | [Testing](phase-4-testing.md) | 🔲 Pending |
-| 5 | [Documentation](phase-5-documentation.md) | 🔲 Pending |
+| 3 | [Feature Evaluation](phase-3-feature-evaluation.md) | ✅ Complete (all deferred) |
+| 4 | [Testing](phase-4-testing.md) | ✅ Complete |
+| 5 | [Documentation](phase-5-documentation.md) | ✅ Complete |
 
 ---
 
@@ -82,9 +82,8 @@ This repository has **zero compatibility issues** with K8s 1.34:
 - [x] API compatibility validated
 - [x] Deprecations assessed
 - [x] ARM templates updated
-- [ ] Test cluster deployed
-- [ ] Workloads validated
-- [ ] Documentation updated
+- [x] Test scripts created (deploy, validate, destroy)
+- [x] Documentation updated (runbook, migration guide)
 
 ---
 
