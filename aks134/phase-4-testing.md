@@ -125,10 +125,27 @@ variables:
   RESOURCE_GROUP: "rg-aks-backup-poc"
 
 stages:
+  - scan        # Pre-deploy: static API deprecation scanning (no cluster needed)
   - deploy
-  - validate
+  - validate    # Post-deploy: cluster validation + live deprecation scanning
   - teardown
 
+# --- Scan Stage (Pre-Deploy) ---
+Scan Deprecated APIs:
+  stage: scan
+  image: us-docker.pkg.dev/fairwinds-ops/oss/pluto:v5
+  script:
+    - pluto detect-files -d kubernetes/ --target-versions k8s=v1.34.0 -o wide
+  allow_failure:
+    exit_codes:
+      - 2   # Deprecated (warning) — don't block pipeline
+            # Exit 3 (removed) will fail the job
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "push"
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_PIPELINE_SOURCE == "schedule" && $ACTION == "create"
+
+# --- Deploy Stage ---
 Deploy Cluster:
   stage: deploy
   script:
@@ -136,6 +153,7 @@ Deploy Cluster:
   rules:
     - if: $CI_PIPELINE_SOURCE == "schedule" && $ACTION == "create"
 
+# --- Validate Stage ---
 Validate Cluster:
   stage: validate
   script:
@@ -145,12 +163,39 @@ Validate Cluster:
   needs:
     - Deploy Cluster
 
+Scan Live Cluster:
+  stage: validate
+  script:
+    - curl -fsSL https://github.com/FairwindsOps/pluto/releases/latest/download/pluto_linux_amd64.tar.gz | tar xz -C /usr/local/bin
+    - SCAN_MODE=live ./scripts/scan-deprecated-apis.sh
+  allow_failure:
+    exit_codes:
+      - 2
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule" && $ACTION == "create"
+  needs:
+    - Deploy Cluster
+
+# --- Teardown Stage ---
 Destroy Cluster:
   stage: teardown
   script:
     - ./scripts/destroy-cluster.sh
   rules:
     - if: $CI_PIPELINE_SOURCE == "schedule" && $ACTION == "destroy"
+
+# --- Day-2: Weekly Deprecation Scan ---
+Weekly Deprecation Scan:
+  stage: scan
+  script:
+    - curl -fsSL https://github.com/FairwindsOps/pluto/releases/latest/download/pluto_linux_amd64.tar.gz | tar xz -C /usr/local/bin
+    - SCAN_MODE=all ./scripts/scan-deprecated-apis.sh | tee deprecation-report.md
+  artifacts:
+    paths:
+      - deprecation-report.md
+    expire_in: 30 days
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule" && $ACTION == "scan"
 ```
 
 #### Scheduled Jobs
@@ -158,6 +203,7 @@ Destroy Cluster:
 |----------|-----|------|
 | Daily Destroy | Destroy Cluster | `0 22 * * 1-5` (10 PM Mon-Fri) |
 | Daily Create | Deploy Cluster | `0 6 * * 1-5` (6 AM Mon-Fri) |
+| Weekly API Scan | Weekly Deprecation Scan | `0 9 * * 1` (9 AM Monday) |
 
 ### Idempotency
 
@@ -173,6 +219,47 @@ Destroy Cluster:
 - [x] Destroy script works (`destroy-cluster.sh`)
 - [x] Scripts are idempotent
 - [x] CI/CD integration documented
+
+---
+
+## 3. Flux/GitOps Integration (Enterprise Guidance)
+
+> **Note:** This PoC does not include Flux. These are conceptual patterns for enterprise adoption.
+
+### Recommended: MR Validation in GitOps Repo
+
+Add Pluto as a merge request validation step in the GitOps repository pipeline. This catches deprecated APIs before they're merged and reconciled to the cluster:
+
+```yaml
+# In the GitOps repo's .gitlab-ci.yml
+Scan Manifests:
+  stage: validate
+  image: us-docker.pkg.dev/fairwinds-ops/oss/pluto:v5
+  script:
+    - pluto detect-files -d . --target-versions k8s=v1.34.0 -o wide
+  allow_failure:
+    exit_codes: [2]
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+```
+
+### Optional: In-Cluster CronJob
+
+Deploy Pluto as a Kubernetes CronJob with a read-only `ClusterRole` for continuous in-cluster scanning:
+
+```
+CronJob (weekly) → pluto detect-api-resources → report to logging/alerting
+```
+
+Requires: `ClusterRole` with `get`/`list` on all API resources, bound via `ClusterRoleBinding` to the CronJob's ServiceAccount.
+
+### Advanced: Flux Notification Webhook
+
+Use Flux's notification controller to trigger a scan after each successful reconciliation:
+
+```
+Flux reconciliation completes → webhook → pipeline trigger → scan-deprecated-apis.sh
+```
 
 ---
 

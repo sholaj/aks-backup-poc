@@ -153,18 +153,60 @@ kubectl get svc -n <your-namespace> -o json | jq '.items[].metadata.annotations 
 
 ### 3. Use API Deprecation Tools
 
+#### kubent (kube-no-trouble)
+
 ```bash
 # Install kubent
 curl -sfL https://raw.githubusercontent.com/doitintl/kube-no-trouble/master/scripts/install.sh | sh
 
 # Scan cluster
 kubent
+```
 
-# Install pluto
+#### Pluto (Fairwinds)
+
+Pluto detects deprecated and removed Kubernetes API versions in manifest files, Helm releases, and live clusters.
+
+```bash
+# Install
 brew install FairwindsOps/tap/pluto
 
-# Scan manifests
-pluto detect-files -d ./manifests/
+# Scan your namespace manifests against K8s 1.34
+pluto detect-files -d ./manifests/ --target-versions k8s=v1.34.0 -o wide
+
+# Scan a running cluster
+pluto detect-api-resources --target-versions k8s=v1.34.0 -o wide
+
+# Scan Helm releases
+pluto detect-helm --target-versions k8s=v1.34.0 -o wide
+
+# Forward-looking: check if your manifests are ready for K8s 1.35
+pluto detect-files -d ./manifests/ --target-versions k8s=v1.35.0 -o wide
+```
+
+**Exit codes** — useful for CI/CD integration:
+
+| Exit Code | Meaning | Action |
+|-----------|---------|--------|
+| 0 | No deprecated APIs | Clean — safe to proceed |
+| 1 | Error | Pluto encountered an error — investigate |
+| 2 | Deprecated APIs found | Warning — still functional, plan migration |
+| 3 | Removed APIs found | Blocker — will break on target version |
+
+**Automated scanning** — use the included scan script:
+
+```bash
+# Scan manifest files only (no cluster needed)
+SCAN_MODE=static ./scripts/scan-deprecated-apis.sh
+
+# Scan a running cluster
+SCAN_MODE=live ./scripts/scan-deprecated-apis.sh
+
+# Both (default)
+./scripts/scan-deprecated-apis.sh
+
+# Override target version for forward-looking scans
+TARGET_K8S_VERSION=1.35 SCAN_MODE=static ./scripts/scan-deprecated-apis.sh
 ```
 
 ---

@@ -208,6 +208,37 @@ else
 fi
 
 echo ""
+echo "=== 8. API Deprecation Check ==="
+
+if command -v pluto &>/dev/null; then
+    log_info "Running Pluto API deprecation scan..."
+
+    # Scan manifest files
+    PLUTO_EXIT=0
+    pluto detect-files -d "$MANIFEST_DIR" --target-versions k8s=v1.34.0 -o wide || PLUTO_EXIT=$?
+
+    case $PLUTO_EXIT in
+        0) log_pass "No deprecated Kubernetes APIs found in manifests" ;;
+        2) log_warn "Deprecated APIs found in manifests (plan migration)" ;;
+        3) log_fail "Removed APIs found in manifests (will break on K8s 1.34)" ;;
+        *) log_fail "Pluto scan encountered an error (exit code: $PLUTO_EXIT)" ;;
+    esac
+
+    # Scan live cluster API resources
+    PLUTO_LIVE_EXIT=0
+    pluto detect-api-resources --target-versions k8s=v1.34.0 -o wide || PLUTO_LIVE_EXIT=$?
+
+    case $PLUTO_LIVE_EXIT in
+        0) log_pass "No deprecated Kubernetes APIs found in cluster" ;;
+        2) log_warn "Deprecated APIs found in cluster (plan migration)" ;;
+        3) log_fail "Removed APIs found in cluster (will break on K8s 1.34)" ;;
+        *) log_fail "Pluto live scan encountered an error (exit code: $PLUTO_LIVE_EXIT)" ;;
+    esac
+else
+    log_warn "Pluto not installed — skipping API deprecation check (brew install FairwindsOps/tap/pluto)"
+fi
+
+echo ""
 echo "=============================================="
 echo "Validation Summary"
 echo "=============================================="
