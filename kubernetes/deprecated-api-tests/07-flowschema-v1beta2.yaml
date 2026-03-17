@@ -1,0 +1,23 @@
+# DEPRECATED: flowcontrol.apiserver.k8s.io/v1beta2 FlowSchema was removed in Kubernetes 1.29
+# Replacement: flowcontrol.apiserver.k8s.io/v1
+apiVersion: flowcontrol.apiserver.k8s.io/v1beta2
+kind: FlowSchema
+metadata:
+  name: deprecated-flowschema-v1beta2
+  labels:
+    app.kubernetes.io/part-of: aks-backup-poc
+    purpose: deprecated-api-test
+spec:
+  priorityLevelConfiguration:
+    name: exempt
+  matchingPrecedence: 1000
+  rules:
+    - subjects:
+        - kind: User
+          user:
+            name: "system:serviceaccount:at-app1:default"
+      resourceRules:
+        - apiGroups: [""]
+          namespaces: ["at-app1"]
+          resources: ["pods"]
+          verbs: ["get", "list", "watch"]

@@ -1,0 +1,15 @@
+# DEPRECATED: policy/v1beta1 PodDisruptionBudget was removed in Kubernetes 1.25
+# Replacement: policy/v1
+apiVersion: policy/v1beta1
+kind: PodDisruptionBudget
+metadata:
+  name: deprecated-pdb
+  namespace: at-app1
+  labels:
+    app.kubernetes.io/part-of: aks-backup-poc
+    purpose: deprecated-api-test
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: nginx

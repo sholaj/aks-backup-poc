@@ -1,0 +1,22 @@
+# DEPRECATED: autoscaling/v2beta1 HorizontalPodAutoscaler was removed in Kubernetes 1.26
+# Replacement: autoscaling/v2
+apiVersion: autoscaling/v2beta1
+kind: HorizontalPodAutoscaler
+metadata:
+  name: deprecated-hpa
+  namespace: at-app1
+  labels:
+    app.kubernetes.io/part-of: aks-backup-poc
+    purpose: deprecated-api-test
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: nginx
+  minReplicas: 1
+  maxReplicas: 5
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        targetAverageUtilization: 70

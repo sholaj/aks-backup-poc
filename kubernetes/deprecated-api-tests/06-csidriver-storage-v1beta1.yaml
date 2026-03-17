@@ -1,0 +1,12 @@
+# DEPRECATED: storage.k8s.io/v1beta1 CSIDriver was removed in Kubernetes 1.22
+# Replacement: storage.k8s.io/v1
+apiVersion: storage.k8s.io/v1beta1
+kind: CSIDriver
+metadata:
+  name: deprecated-csidriver
+  labels:
+    app.kubernetes.io/part-of: aks-backup-poc
+    purpose: deprecated-api-test
+spec:
+  attachRequired: true
+  podInfoOnMount: true
