@@ -1,0 +1,98 @@
+# Pre-Upgrade API Deprecation Gate — GitLab CI/CD Job
+#
+# Include this in your main .gitlab-ci.yml:
+#   include:
+#     - local: 'pipelines/pre-upgrade-api-gate.gitlab-ci.yml'
+#
+# This job runs BEFORE the AKS ARM template deployment stage.
+# It scans the live cluster for deprecated/removed Kubernetes APIs
+# using Pluto's detect-all-in-cluster (API resources + Helm releases).
+#
+# If removed APIs are found → pipeline STOPS, GitLab issue is created.
+# If only deprecated APIs → pipeline continues with a warning (unless strict mode).
+
+stages:
+  - validate
+  - pre-upgrade-gate    # ← INSERT BEFORE deploy stage
+  - deploy
+  - setup
+  - test
+  - teardown
+
+# -------------------------------------------------------------------
+# Pre-Upgrade API Deprecation Gate
+# -------------------------------------------------------------------
+pluto-api-gate:
+  stage: pre-upgrade-gate
+  image: mcr.microsoft.com/azure-cli:latest
+  tags:
+    - kubernetes  # adjust to your runner tags
+  rules:
+    # Only run when ARM parameters file changes or on scheduled pipelines
+    - changes:
+        - arm-templates/02-aks-cluster.parameters.json
+      when: always
+    - if: '$CI_PIPELINE_SOURCE == "schedule"'
+      when: always
+    - if: '$CI_PIPELINE_SOURCE == "web"'
+      when: manual
+      allow_failure: false
+    # Skip on feature branches that don't touch cluster config
+    - when: never
+  variables:
+    CREATE_GITLAB_ISSUE: "true"
+    GITLAB_PROJECT_ID: "${CI_PROJECT_ID}"
+    GITLAB_TOKEN: "${CI_JOB_TOKEN}"
+    FAIL_ON_DEPRECATION: "false"          # Set to "true" for strict mode
+    SKIP_HELM_SCAN: "false"
+  before_script:
+    # Install Pluto
+    - |
+      echo "[INFO] Installing Pluto..."
+      curl -fsSL https://github.com/FairwindsOps/pluto/releases/latest/download/pluto_linux_amd64.tar.gz \
+        | tar xz -C /usr/local/bin
+      pluto version
+
+    # Install kubectl
+    - |
+      echo "[INFO] Installing kubectl..."
+      az aks install-cli 2>/dev/null || true
+
+    # Authenticate to Azure (uses CI/CD service principal variables)
+    - |
+      echo "[INFO] Authenticating to Azure..."
+      az login --service-principal \
+        -u "${ARM_CLIENT_ID}" \
+        -p "${ARM_CLIENT_SECRET}" \
+        --tenant "${ARM_TENANT_ID}"
+      az account set --subscription "${ARM_SUBSCRIPTION_ID}"
+
+    # Get AKS credentials
+    - |
+      CLUSTER_NAME=$(jq -r '.parameters.clusterName.value' arm-templates/02-aks-cluster.parameters.json)
+      RESOURCE_GROUP="${RESOURCE_GROUP:-rg-aksbkppoc}"
+      echo "[INFO] Getting credentials for cluster: ${CLUSTER_NAME}"
+      az aks get-credentials \
+        --resource-group "${RESOURCE_GROUP}" \
+        --name "${CLUSTER_NAME}" \
+        --overwrite-existing
+  script:
+    - ./scripts/11-pre-upgrade-api-gate.sh
+  artifacts:
+    when: always
+    paths:
+      - pluto-report.txt
+    expire_in: 30 days
+    reports:
+      # JUnit-style report if you extend the script to output JUnit XML
+      junit: pluto-junit.xml
+  allow_failure: false   # BLOCKS the pipeline on failure
+
+# -------------------------------------------------------------------
+# AKS ARM Template Deployment (existing job — shown for context)
+# -------------------------------------------------------------------
+# deploy-aks:
+#   stage: deploy
+#   needs: ["pluto-api-gate"]   # ← Depends on gate passing
+#   script:
+#     - ./scripts/02-deploy-aks.sh
