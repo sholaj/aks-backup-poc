@@ -18,7 +18,7 @@ The PoC has already been run by a vendor partner; the patterns proven there are 
 
 1. Read this entire prompt before acting.
 2. **Deeply analyse the two reference repositories listed in the next section.** Use your full repo-reading capability — file listing, content fetch, recursive search across both. Spend genuine effort here; a superficial skim is worse than no read at all, because it produces a scaffold that *looks* aligned to team conventions but isn't.
-3. Produce a **plan**: a single-page summary covering (a) the directory structure you'll create, (b) the files you'll generate, (c) any conventions you've adopted or adapted from the internal patterns repo with a one-line justification per adoption, (d) any technical content you've extracted from the WWT PoC repo that you'll fold into the prompt library or instruction files, and (e) any decisions you've inferred from this prompt or the reference repos that you want me to confirm.
+3. Produce a **plan**: a single-page summary covering (a) the directory structure you'll create, (b) the files you'll generate, (c) any conventions you've adopted or adapted from the internal patterns repo with a one-line justification per adoption, (d) any technical content you've extracted from the bbt PoC repo that you'll fold into the prompt library or instruction files, and (e) any decisions you've inferred from this prompt or the reference repos that you want me to confirm.
 4. Wait for me to say "proceed" (or to send corrections).
 5. Then create all files in a single pass. Use the conventions specified below, refined by what you found in the reference repos. Where this prompt and the internal patterns repo agree, defer to either. Where they disagree, defer to the internal patterns repo and flag the conflict in the plan.
 
@@ -45,9 +45,9 @@ What to extract:
 
 If anything in the internal patterns repo contradicts a rule in this prompt, raise it in the plan. The team's actual conventions take precedence over my suggestions.
 
-### 2. WWT PoC reference repository
+### 2. bbt PoC reference repository
 
-**Repo**: `<ORG>/wwt-poc-lab`  *(confirm exact name in the org — the visible name in the dashboard may be `wwt-pocdoc-phase2` or similar; use the actual repo holding the Phase 1 PoC documentation and reference manifests)*
+**Repo**: `<ORG>/bbt-poc-lab`  *(confirm exact name in the org — the visible name in the dashboard may be `bbt-pocdoc-phase2` or similar; use the actual repo holding the Phase 1 PoC documentation and reference manifests)*
 
 The vendor partner's PoC documentation and reference manifests from Phase 1 of the migration. This is the source of technical truth for what has been proven on this stack on this hardware.
 
@@ -56,11 +56,11 @@ What to extract:
 - ABI install configurations — `install-config.yaml`, `agent-config.yaml` shape, NMState policy patterns per host, the rendezvous-IP convention.
 - Cilium 1.19 configurations validated on bare-metal OpenShift — `CiliumConfig` CR, Isovalent OLM operator manifests, the cluster-network manifests sequence, the exact VXLAN port and clusterHealthPort values that survived install.
 - ACI integration specifics — EPG, bridge-domain, VRF design as actually implemented in Phase 1. Note where Phase 2's two-VRF (WORKLOAD-VRF, SEGMENTATION-VRF) design extends or supersedes the Phase 1 setup.
-- DNS patterns that survived install validation — record formats, PTR record requirements, validation steps. (DNS misconfiguration is the documented #1 install failure cause; the WWT patterns are battle-tested.)
+- DNS patterns that survived install validation — record formats, PTR record requirements, validation steps. (DNS misconfiguration is the documented #1 install failure cause; the bbt patterns are battle-tested.)
 - Image dependency lists, mirror registry choices, IDMS / ITMS / ImageSet patterns. The Phase 1 image dependency chain was documented as undocumented-and-painful; extract anything that addresses that.
 - Documented gotchas, near-misses, workarounds, image-pull times — these go into the prompt library (`cilium-openshift`, `openshift-virt-migration`) as project-specific guidance.
 
-Do NOT copy WWT manifests verbatim into `eco-eos-lab`. The team owns and adapts. But understand the manifests deeply enough that the prompt-library prompts and the path-scoped instruction files carry the project-specific gotchas the team has already paid for in Phase 1.
+Do NOT copy bbt manifests verbatim into `eco-eos-lab`. The team owns and adapts. But understand the manifests deeply enough that the prompt-library prompts and the path-scoped instruction files carry the project-specific gotchas the team has already paid for in Phase 1.
 
 ## Project context
 
@@ -300,7 +300,7 @@ The plan should include:
 
 - The full file list you intend to create (paths only).
 - **From the internal setup-patterns repo**: which conventions you've adopted (Copilot instruction style, path-scoped instruction format, prompt-file format, ADR template, linter configs) with a one-line justification each. Flag any contradictions between the patterns repo and this prompt — defer to the patterns repo and explain.
-- **From the WWT PoC repo**: what you've extracted that you'll fold into the prompt library and instruction files (specific Cilium config values, NMState patterns, DNS validation steps, image-sync gotchas, etc.). Cite the source file in the WWT repo for each extraction.
+- **From the bbt PoC repo**: what you've extracted that you'll fold into the prompt library and instruction files (specific Cilium config values, NMState patterns, DNS validation steps, image-sync gotchas, etc.). Cite the source file in the bbt repo for each extraction.
 - Any decisions you've inferred that you want me to confirm before producing (e.g. the collection-pinning strategy for `infra/ansible/requirements.yml` — Galaxy versions or git refs? — should the instruction file express a preference?).
 - Anything in this prompt or the reference repos that's ambiguous or under-specified.
 - An estimate of how many files the foundation will land (sanity check against my expectation of ~40).
